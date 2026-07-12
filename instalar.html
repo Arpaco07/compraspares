@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Instalar — Pares 84×88 Pedidos</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:#000;color:#fff;min-height:100vh;-webkit-font-smoothing:antialiased}
+.page{max-width:420px;margin:0 auto;padding:24px 20px 60px}
+.logo{width:80px;height:80px;display:block;margin:0 auto 16px}
+h1{text-align:center;font-size:18px;font-weight:700;letter-spacing:.5px;margin-bottom:4px}
+.sub{text-align:center;font-size:12px;color:#666;letter-spacing:1px;margin-bottom:32px}
+.section{margin-bottom:28px}
+.section h2{font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#555;margin-bottom:12px}
+.link-card{
+  display:block;text-decoration:none;padding:16px;border-radius:10px;
+  border:1px solid #222;background:#111;margin-bottom:8px;transition:all .2s;
+}
+.link-card:hover{border-color:#444;background:#1a1a1a}
+.link-card .role{font-size:15px;font-weight:600;color:#fff;margin-bottom:4px}
+.link-card .desc{font-size:12px;color:#777}
+.link-card .url{font-size:11px;color:#444;margin-top:6px;word-break:break-all;font-family:monospace}
+.steps{counter-reset:step}
+.step{
+  position:relative;padding:0 0 20px 40px;border-left:1px solid #222;margin-left:12px;
+}
+.step:last-child{border-left:none}
+.step::before{
+  counter-increment:step;content:counter(step);
+  position:absolute;left:-13px;top:0;width:26px;height:26px;border-radius:50%;
+  background:#fff;color:#000;font-size:12px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+}
+.step h3{font-size:14px;font-weight:600;margin-bottom:4px}
+.step p{font-size:13px;color:#999;line-height:1.5}
+.step p strong{color:#ccc}
+.divider{height:1px;background:#1a1a1a;margin:28px 0}
+.note{font-size:11px;color:#444;text-align:center;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="page">
+  <img src="logo.png" class="logo" alt="Pares 84×88">
+  <h1>Pedidos Pares 84×88</h1>
+  <p class="sub">Instalación para empleados</p>
+
+  <div class="section">
+    <h2>Tu acceso directo</h2>
+    <a class="link-card" id="link-cocina">
+      <div class="role">🍳 Cocina</div>
+      <div class="desc">Agregar pedidos por sección (Sams, Verduras, Otros...)</div>
+      <div class="url" id="url-cocina"></div>
+    </a>
+    <a class="link-card" id="link-barra">
+      <div class="role">🍹 Barra</div>
+      <div class="desc">Agregar pedidos de barra</div>
+      <div class="url" id="url-barra"></div>
+    </a>
+    <a class="link-card" id="link-comprador">
+      <div class="role">🛒 Comprador</div>
+      <div class="desc">Ver todo, marcar compras, exportar lista</div>
+      <div class="url" id="url-comprador"></div>
+    </a>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <h2>Cómo instalar en tu celular</h2>
+    <div class="steps">
+      <div class="step">
+        <h3>Abre tu link</h3>
+        <p>Toca el link de arriba que te corresponda (<strong>Cocina</strong> o <strong>Barra</strong>)</p>
+      </div>
+      <div class="step">
+        <h3>Android (Chrome)</h3>
+        <p>Toca los <strong>3 puntitos ⋮</strong> arriba a la derecha → <strong>"Agregar a pantalla de inicio"</strong> o <strong>"Instalar app"</strong></p>
+      </div>
+      <div class="step">
+        <h3>iPhone (Safari)</h3>
+        <p>Toca el botón <strong>Compartir ↑</strong> abajo → <strong>"Agregar a pantalla de inicio"</strong></p>
+      </div>
+      <div class="step">
+        <h3>Listo</h3>
+        <p>Se crea un ícono en tu pantalla. Ábrelo como cualquier app.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <h2>Reglas</h2>
+    <div class="steps">
+      <div class="step">
+        <h3>Pedidos antes de las 10:00 AM</h3>
+        <p>Todo lo que se necesite para el día siguiente se agrega <strong>antes de las 10 de la mañana</strong>. Lo que se agregue después aparece marcado como <strong>⚠ tarde</strong>.</p>
+      </div>
+      <div class="step">
+        <h3>Si se te olvidó, lo compras tú</h3>
+        <p>Los productos agregados después de las 10 AM son responsabilidad de quien los pidió tarde.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <p class="note">Pares 84×88<br>Sistema de pedidos internos</p>
+</div>
+
+<script>
+const base = window.location.href.replace('instalar.html','').replace(/\/$/,'');
+document.getElementById('url-cocina').textContent = base + '/?v=cocina';
+document.getElementById('url-barra').textContent = base + '/?v=barra';
+document.getElementById('url-comprador').textContent = base + '/?v=comprador';
+document.getElementById('link-cocina').href = base + '/?v=cocina';
+document.getElementById('link-barra').href = base + '/?v=barra';
+document.getElementById('link-comprador').href = base + '/?v=comprador';
+</script>
+</body>
+</html>

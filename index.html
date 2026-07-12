@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Pares 84×88 — Pedidos</title>
 <link rel="icon" type="image/png" href="logo.png">
+<link rel="apple-touch-icon" href="logo.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Pedidos P88">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -111,13 +117,17 @@ button{font-family:inherit;cursor:pointer}input{font-family:inherit}
 .dot-pulse span:nth-child(2){animation-delay:.2s}.dot-pulse span:nth-child(3){animation-delay:.4s}
 @keyframes pulse{0%,80%,100%{opacity:.3}40%{opacity:1}}
 
-.setup-box{background:#111;border:1px solid #333;border-radius:12px;padding:24px;max-width:400px;width:100%}
-.setup-box h3{color:#fff;font-size:14px;font-weight:600;margin-bottom:16px;letter-spacing:.5px}
-.setup-box label{color:#888;font-size:11px;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px;margin-top:12px}
-.setup-box input{width:100%;padding:10px 12px;border-radius:8px;border:1px solid #333;background:#222;color:#fff;font-size:13px;outline:none;font-family:inherit}
-.setup-box input:focus{border-color:#555}
-.setup-box button{margin-top:20px;width:100%;padding:12px;border-radius:8px;border:none;background:#fff;color:#000;font-size:14px;font-weight:600;cursor:pointer}
-.setup-box .setup-hint{color:#555;font-size:11px;margin-top:12px;line-height:1.5}
+.install-banner{
+  position:fixed;bottom:0;left:0;right:0;background:#161616;border-top:1px solid #2a2a2a;
+  padding:14px 20px;display:flex;align-items:center;justify-content:space-between;z-index:300;
+  animation:slideUp .3s ease;
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.install-banner p{color:#aaa;font-size:13px}
+.install-banner p strong{color:#fff}
+.install-banner button{padding:8px 18px;border-radius:6px;border:none;font-size:13px;font-weight:600;cursor:pointer}
+.install-banner .btn-install{background:#fff;color:#000}
+.install-banner .btn-dismiss{background:none;color:#555;margin-right:8px}
 </style>
 </head>
 <body>
@@ -128,8 +138,8 @@ button{font-family:inherit;cursor:pointer}input{font-family:inherit}
 // ══════════════════════════════════════════
 // CONFIG — Pares 84×88 Pedidos
 // ══════════════════════════════════════════
-let SUPABASE_URL = localStorage.getItem('p88_sb_url') || '';
-let SUPABASE_KEY = localStorage.getItem('p88_sb_key') || '';
+let SUPABASE_URL = 'https://ltqtvxullzttaxmaoygd.supabase.co';
+let SUPABASE_KEY = 'sb_publishable_JLsxSWLvG9nbj6bjqFzHvA_hxtLcYvB';
 const HORA_LIMITE = 10;
 const COCINA_SECCIONES = ['Sams','Verduras','Otros','Comida de Personal','Casa'];
 const REFRESH_MS = 15000;
@@ -193,8 +203,7 @@ let S = {
   filtro: 'todos',
   pedidos: [],
   fechas: [],
-  ready: false,
-  configured: !!(SUPABASE_URL && SUPABASE_KEY)
+  ready: false
 };
 
 // ── Detect role from URL: ?v=cocina | ?v=barra | ?v=comprador ──
@@ -205,35 +214,11 @@ const LOCKED_ROL = getParam('v');
 // ══════════════════════════════════════════
 function render() {
   const app = document.getElementById('app');
-  if (!S.configured) { app.innerHTML = renderSetup(); bindSetup(); return; }
   if (!S.ready) { return; }
   if (!S.rol) { app.innerHTML = renderSplash(); bindSplash(); return; }
   if (S.rol === 'cocina') { app.innerHTML = renderCocina(); bindCocina(); return; }
   if (S.rol === 'barra') { app.innerHTML = renderBarra(); bindBarra(); return; }
   if (S.rol === 'comprador') { app.innerHTML = renderComprador(); bindComprador(); return; }
-}
-
-// ── Setup (first time) ──
-function renderSetup() {
-  const savedUrl = localStorage.getItem('p88_sb_url') || '';
-  const savedKey = localStorage.getItem('p88_sb_key') || '';
-  return `
-  <div class="splash">
-    <img src="logo.png" class="splash-logo" alt="Pares 84×88">
-    <div class="splash-title">Configuración</div>
-    <div class="setup-box">
-      <h3>Conectar Supabase</h3>
-      <label>URL del proyecto</label>
-      <input id="sb-url" placeholder="https://xxxxx.supabase.co" value="${esc(savedUrl)}">
-      <label>Anon / Public Key</label>
-      <input id="sb-key" placeholder="eyJhbGciOi..." value="${esc(savedKey)}">
-      <button id="sb-save">Conectar</button>
-      <div class="setup-hint">
-        Crea una tabla <b>pedidos</b> en Supabase con estas columnas:<br>
-        id (uuid, default gen_random_uuid()), depto (text), seccion (text), nombre (text), cantidad (text), unidad (text), hora (text), fecha (date), comprado (bool default false), created_at (timestamptz default now())
-      </div>
-    </div>
-  </div>`;
 }
 
 function renderSplash() {
@@ -415,16 +400,6 @@ function renderExportArea(items){
 // ══════════════════════════════════════════
 // BINDINGS
 // ══════════════════════════════════════════
-function bindSetup() {
-  document.getElementById('sb-save')?.addEventListener('click', () => {
-    const url = document.getElementById('sb-url').value.trim().replace(/\/$/,'');
-    const key = document.getElementById('sb-key').value.trim();
-    if (!url || !key) { toast('Completa ambos campos'); return; }
-    localStorage.setItem('p88_sb_url', url);
-    localStorage.setItem('p88_sb_key', key);
-    window.location.reload();
-  });
-}
 
 function bindSplash() {
   document.querySelectorAll('.role-btn').forEach(b => b.addEventListener('click', () => {
@@ -531,19 +506,50 @@ async function loadData() {
 // ── Auto-refresh ──
 setInterval(() => { if (S.ready && S.rol) loadData(); }, REFRESH_MS);
 
+// ── PWA Install ──
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  showInstallBanner();
+});
+
+function showInstallBanner() {
+  if (document.querySelector('.install-banner')) return;
+  const banner = document.createElement('div');
+  banner.className = 'install-banner';
+  banner.innerHTML = `
+    <p><strong>Instalar Pedidos P88</strong><br>Acceso directo desde tu pantalla</p>
+    <div>
+      <button class="btn-dismiss" id="dismiss-install">No</button>
+      <button class="btn-install" id="do-install">Instalar</button>
+    </div>`;
+  document.body.appendChild(banner);
+  document.getElementById('do-install').addEventListener('click', async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const result = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+    }
+    banner.remove();
+  });
+  document.getElementById('dismiss-install').addEventListener('click', () => banner.remove());
+}
+
+// ── Service Worker ──
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
 // ── Init ──
 (function init() {
-  if (S.configured) {
-    if (LOCKED_ROL && ['cocina','barra','comprador'].includes(LOCKED_ROL)) {
-      S.rol = LOCKED_ROL;
-    }
-    if (S.rol) {
-      loadData();
-    } else {
-      S.ready = true;
-      render();
-    }
+  if (LOCKED_ROL && ['cocina','barra','comprador'].includes(LOCKED_ROL)) {
+    S.rol = LOCKED_ROL;
+  }
+  if (S.rol) {
+    loadData();
   } else {
+    S.ready = true;
     render();
   }
 })();
