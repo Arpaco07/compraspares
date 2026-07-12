@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Pares 84×88 — Pedidos</title>
+<link rel="icon" type="image/png" href="logo.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#fafafa;--card:#fff;--text:#111;--sub:#888;--border:#e8e8e8;--accent:#111;--danger:#c0392b;--success:#27ae60;--warn:#e67e22}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}input{font-family:inherit}
+
+.splash{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;padding:24px;gap:28px}
+.splash-logo{width:120px;height:120px;object-fit:contain;opacity:.9}
+.splash-title{color:#fff;font-size:13px;letter-spacing:4px;text-transform:uppercase;font-weight:300}
+.splash-date{color:#555;font-size:12px;letter-spacing:2px;font-weight:300}
+.splash-links{margin-top:12px;display:flex;flex-direction:column;gap:10px;align-items:center}
+.splash-links a{color:#555;font-size:12px;text-decoration:none;letter-spacing:1px;border:1px solid #333;padding:8px 20px;border-radius:6px;transition:all .2s}
+.splash-links a:hover{color:#fff;border-color:#fff}
+.roles{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:4px}
+.role-btn{padding:14px 28px;border-radius:8px;border:1px solid #333;background:transparent;color:#fff;font-size:14px;font-weight:500;letter-spacing:1px;transition:all .25s}
+.role-btn:hover{background:#fff;color:#000;border-color:#fff}
+.role-btn span{display:block;font-size:11px;color:#666;font-weight:300;margin-top:4px;letter-spacing:0}
+.role-btn:hover span{color:#555}
+
+.app{max-width:540px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column}
+.header{padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:50}
+.header-logo{height:32px;width:32px;object-fit:contain;border-radius:50%;background:#000;padding:3px}
+.header-title{font-size:14px;font-weight:600;letter-spacing:.5px}
+.header-date{font-size:11px;color:var(--sub);font-weight:400;letter-spacing:.5px}
+.content{flex:1;padding:16px 20px 100px}
+
+.tabs{display:flex;gap:4px;overflow-x:auto;padding-bottom:12px;margin-bottom:16px;-webkit-overflow-scrolling:touch}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:7px 14px;border-radius:6px;border:1px solid var(--border);background:var(--card);font-size:12px;font-weight:500;white-space:nowrap;color:var(--sub);transition:all .2s}
+.tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tab .count{font-size:10px;margin-left:4px;opacity:.6}
+
+.add-form{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.add-form input{padding:10px 12px;border-radius:8px;border:1px solid var(--border);font-size:14px;outline:none;transition:border-color .2s;background:#fff}
+.add-form input:focus{border-color:#999}
+.inp-nombre{flex:2 1 140px}.inp-cant{flex:0 1 60px;text-align:center}.inp-uni{flex:0 1 60px;text-align:center}
+.btn-add{padding:10px 16px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:16px;font-weight:600;flex-shrink:0}
+
+.item-list{display:flex;flex-direction:column;gap:4px}
+.item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:#fff;border:1px solid var(--border);transition:all .2s}
+.item.comprado{opacity:.5;background:#f8f8f8}
+.item-check{width:22px;height:22px;border-radius:6px;border:1.5px solid #ccc;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;color:#fff;transition:all .15s}
+.item-check.checked{background:var(--success);border-color:var(--success)}
+.item-info{flex:1;min-width:0}
+.item-name{font-size:14px;font-weight:500}
+.item.comprado .item-name{text-decoration:line-through;color:#aaa}
+.item-meta{font-size:11px;color:var(--sub);margin-top:2px;display:flex;gap:8px;align-items:center}
+.item-cant{font-weight:500;color:#555}
+.item-hora{font-weight:400}
+.item-tarde{color:var(--danger);font-weight:600}
+.item-del{background:none;border:none;color:#ccc;font-size:16px;padding:2px 6px;flex-shrink:0;transition:color .15s}
+.item-del:hover{color:var(--danger)}
+.empty{text-align:center;color:#ccc;padding:40px 20px;font-size:13px;letter-spacing:.5px}
+
+.progress-bar{background:#f0f0f0;border-radius:10px;padding:14px 16px;margin-bottom:16px}
+.progress-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.progress-label{font-size:12px;font-weight:500;color:var(--sub)}
+.progress-pct{font-size:22px;font-weight:800}
+.progress-track{height:5px;border-radius:3px;background:#e0e0e0;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .4s}
+.progress-actions{display:flex;justify-content:space-between;margin-top:8px;font-size:11px}
+.progress-actions button{background:none;border:none;font-weight:600;font-size:11px}
+.grupo-title{font-size:11px;font-weight:700;color:var(--sub);letter-spacing:1.5px;text-transform:uppercase;margin:16px 0 8px;display:flex;justify-content:space-between}
+.grupo-pending{font-weight:400;letter-spacing:0;text-transform:none}
+.filters{display:flex;gap:4px;overflow-x:auto;padding-bottom:8px;margin-bottom:8px}
+.filters::-webkit-scrollbar{display:none}
+.filter-btn{padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:#fff;font-size:11px;font-weight:500;white-space:nowrap;color:var(--sub);transition:all .2s}
+.filter-btn.active{background:#111;color:#fff;border-color:#111}
+
+.export-area{position:absolute;left:-9999px;top:0;width:420px;background:#fff;padding:0}
+.export-header{background:#000;padding:24px;display:flex;align-items:center;gap:14px}
+.export-logo{width:48px;height:48px;object-fit:contain}
+.export-header-text{color:#fff}
+.export-header-text h2{font-size:16px;font-weight:600;letter-spacing:1px;margin-bottom:2px}
+.export-header-text p{font-size:11px;color:#999;letter-spacing:.5px}
+.export-body{padding:20px}
+.export-section{margin-bottom:16px}
+.export-section-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#888;border-bottom:1px solid #eee;padding-bottom:4px;margin-bottom:8px}
+.export-item{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px}
+.export-item .check-mark{width:14px;height:14px;border-radius:4px;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0}
+.export-item .check-mark.done{background:#27ae60;border-color:#27ae60;color:#fff}
+.export-item.done{opacity:.5;text-decoration:line-through}
+.export-item .cant{color:#888;font-size:11px;margin-left:auto;white-space:nowrap}
+.export-item .hora-tag{font-size:9px;padding:1px 5px;border-radius:3px;margin-left:4px}
+.export-item .hora-tag.tarde{background:#fdecea;color:#c0392b}
+.export-footer{padding:12px 20px;border-top:1px solid #eee;font-size:10px;color:#bbb;text-align:center;letter-spacing:.5px}
+
+.fab-export{position:fixed;bottom:20px;right:20px;width:48px;height:48px;border-radius:12px;background:#000;color:#fff;border:none;font-size:20px;box-shadow:0 4px 16px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;z-index:100;transition:transform .15s}
+.fab-export:active{transform:scale(.92)}
+.date-select{padding:6px 10px;border-radius:6px;border:1px solid var(--border);font-size:13px;outline:none;font-family:inherit}
+
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+.loading-screen{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;gap:16px}
+.loading-screen img{width:80px;opacity:.5}
+.loading-screen p{color:#555;font-size:12px;letter-spacing:2px}
+.dot-pulse{display:flex;gap:4px}.dot-pulse span{width:6px;height:6px;border-radius:50%;background:#555;animation:pulse 1.2s infinite}
+.dot-pulse span:nth-child(2){animation-delay:.2s}.dot-pulse span:nth-child(3){animation-delay:.4s}
+@keyframes pulse{0%,80%,100%{opacity:.3}40%{opacity:1}}
+
+.setup-box{background:#111;border:1px solid #333;border-radius:12px;padding:24px;max-width:400px;width:100%}
+.setup-box h3{color:#fff;font-size:14px;font-weight:600;margin-bottom:16px;letter-spacing:.5px}
+.setup-box label{color:#888;font-size:11px;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px;margin-top:12px}
+.setup-box input{width:100%;padding:10px 12px;border-radius:8px;border:1px solid #333;background:#222;color:#fff;font-size:13px;outline:none;font-family:inherit}
+.setup-box input:focus{border-color:#555}
+.setup-box button{margin-top:20px;width:100%;padding:12px;border-radius:8px;border:none;background:#fff;color:#000;font-size:14px;font-weight:600;cursor:pointer}
+.setup-box .setup-hint{color:#555;font-size:11px;margin-top:12px;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app"><div class="loading-screen"><img src="logo.png" alt=""><div class="dot-pulse"><span></span><span></span><span></span></div><p>Cargando</p></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+// CONFIG — Pares 84×88 Pedidos
+// ══════════════════════════════════════════
+let SUPABASE_URL = localStorage.getItem('p88_sb_url') || '';
+let SUPABASE_KEY = localStorage.getItem('p88_sb_key') || '';
+const HORA_LIMITE = 10;
+const COCINA_SECCIONES = ['Sams','Verduras','Otros','Comida de Personal','Casa'];
+const REFRESH_MS = 15000;
+
+// ── Supabase mini-client ──
+const sb = {
+  async query(table, method, opts = {}) {
+    let url = `${SUPABASE_URL}/rest/v1/${table}`;
+    const headers = {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': method === 'POST' ? 'return=representation' : ''
+    };
+    if (opts.filters) url += '?' + opts.filters;
+    if (opts.order) url += (url.includes('?') ? '&' : '?') + 'order=' + opts.order;
+    if (method === 'GET' || method === 'DELETE') {
+      const r = await fetch(url, { method, headers });
+      return method === 'GET' ? r.json() : r;
+    }
+    const r = await fetch(url, { method, headers, body: JSON.stringify(opts.body) });
+    return r.json();
+  },
+  async getPedidos(fecha) {
+    return this.query('pedidos', 'GET', { filters: `fecha=eq.${fecha}`, order: 'created_at.asc' });
+  },
+  async addPedido(item) {
+    return this.query('pedidos', 'POST', { body: item });
+  },
+  async toggleComprado(id, val) {
+    return this.query('pedidos', 'PATCH', { filters: `id=eq.${id}`, body: { comprado: val } });
+  },
+  async deletePedido(id) {
+    return this.query('pedidos', 'DELETE', { filters: `id=eq.${id}` });
+  },
+  async marcarTodos(fecha, val) {
+    return this.query('pedidos', 'PATCH', { filters: `fecha=eq.${fecha}`, body: { comprado: val } });
+  },
+  async getFechas() {
+    const r = await this.query('pedidos', 'GET', { filters: 'select=fecha', order: 'fecha.desc' });
+    return [...new Set(r.map(x => x.fecha))];
+  }
+};
+
+// ── Helpers ──
+function uid(){return crypto.randomUUID?.()|| (Date.now().toString(36)+Math.random().toString(36).slice(2,8))}
+function fechaHoy(){return new Date().toISOString().slice(0,10)}
+function horaActual(){const d=new Date();return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')}
+function esTarde(hora){if(!hora)return false;return parseInt(hora.split(':')[0])>=HORA_LIMITE}
+function formatFecha(s){const[y,m,d]=s.split('-');const mm=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];return parseInt(d)+' '+mm[parseInt(m)-1]+' '+y}
+function esc(s){if(!s)return'';return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
+function getParam(k){return new URLSearchParams(window.location.search).get(k)}
+
+// ── State ──
+let S = {
+  rol: getParam('v') || null,  // cocina | barra | comprador | null
+  fecha: fechaHoy(),
+  fechaSel: fechaHoy(),
+  seccion: 'Sams',
+  filtro: 'todos',
+  pedidos: [],
+  fechas: [],
+  ready: false,
+  configured: !!(SUPABASE_URL && SUPABASE_KEY)
+};
+
+// ── Detect role from URL: ?v=cocina | ?v=barra | ?v=comprador ──
+const LOCKED_ROL = getParam('v');
+
+// ══════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════
+function render() {
+  const app = document.getElementById('app');
+  if (!S.configured) { app.innerHTML = renderSetup(); bindSetup(); return; }
+  if (!S.ready) { return; }
+  if (!S.rol) { app.innerHTML = renderSplash(); bindSplash(); return; }
+  if (S.rol === 'cocina') { app.innerHTML = renderCocina(); bindCocina(); return; }
+  if (S.rol === 'barra') { app.innerHTML = renderBarra(); bindBarra(); return; }
+  if (S.rol === 'comprador') { app.innerHTML = renderComprador(); bindComprador(); return; }
+}
+
+// ── Setup (first time) ──
+function renderSetup() {
+  const savedUrl = localStorage.getItem('p88_sb_url') || '';
+  const savedKey = localStorage.getItem('p88_sb_key') || '';
+  return `
+  <div class="splash">
+    <img src="logo.png" class="splash-logo" alt="Pares 84×88">
+    <div class="splash-title">Configuración</div>
+    <div class="setup-box">
+      <h3>Conectar Supabase</h3>
+      <label>URL del proyecto</label>
+      <input id="sb-url" placeholder="https://xxxxx.supabase.co" value="${esc(savedUrl)}">
+      <label>Anon / Public Key</label>
+      <input id="sb-key" placeholder="eyJhbGciOi..." value="${esc(savedKey)}">
+      <button id="sb-save">Conectar</button>
+      <div class="setup-hint">
+        Crea una tabla <b>pedidos</b> en Supabase con estas columnas:<br>
+        id (uuid, default gen_random_uuid()), depto (text), seccion (text), nombre (text), cantidad (text), unidad (text), hora (text), fecha (date), comprado (bool default false), created_at (timestamptz default now())
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderSplash() {
+  const base = window.location.origin + window.location.pathname;
+  return `
+  <div class="splash">
+    <img src="logo.png" class="splash-logo" alt="Pares 84×88">
+    <div class="splash-title">Pedidos</div>
+    <div class="splash-date">${formatFecha(fechaHoy())}</div>
+    <div class="roles">
+      <button class="role-btn" data-rol="cocina">Cocina<span>Pedidos por sección</span></button>
+      <button class="role-btn" data-rol="barra">Barra<span>Lista general</span></button>
+      <button class="role-btn" data-rol="comprador">Comprador<span>Ver todo · marcar compras</span></button>
+    </div>
+    <div class="splash-links">
+      <div class="splash-date" style="margin-top:12px">Links directos para tu equipo</div>
+      <a href="${base}?v=cocina">🍳 ${base}?v=cocina</a>
+      <a href="${base}?v=barra">🍹 ${base}?v=barra</a>
+      <a href="${base}?v=comprador">🛒 ${base}?v=comprador</a>
+    </div>
+  </div>`;
+}
+
+function renderHeader(titulo) {
+  const showBack = !LOCKED_ROL;
+  return `
+  <div class="header">
+    ${showBack ? '<button class="header-back" id="btn-back">← Salir</button>' : '<div></div>'}
+    <div style="display:flex;align-items:center;gap:8px">
+      <img src="logo.png" class="header-logo">
+      <span class="header-title">${titulo}</span>
+    </div>
+    <span class="header-date">${formatFecha(S.fecha)}</span>
+  </div>`;
+}
+
+function renderItemForm(id) {
+  return `
+  <div class="add-form" id="${id}">
+    <input class="inp-nombre" placeholder="Producto..." id="${id}-n" autocomplete="off">
+    <input class="inp-cant" placeholder="Cant." id="${id}-c" autocomplete="off">
+    <input class="inp-uni" placeholder="kg, pz…" id="${id}-u" autocomplete="off">
+    <button class="btn-add" id="${id}-btn">+</button>
+  </div>`;
+}
+
+function renderItem(it, modo) {
+  const tarde = esTarde(it.hora);
+  const check = modo === 'comprador' ? `<button class="item-check ${it.comprado?'checked':''}" data-toggle="${it.id}">${it.comprado?'✓':''}</button>` : '';
+  const del = modo !== 'comprador' && !it.comprado ? `<button class="item-del" data-del="${it.id}">✕</button>` : '';
+  return `
+  <div class="item ${it.comprado?'comprado':''}">
+    ${check}
+    <div class="item-info">
+      <div class="item-name">${esc(it.nombre)}</div>
+      <div class="item-meta">
+        ${it.cantidad ? `<span class="item-cant">${esc(it.cantidad)} ${esc(it.unidad||'')}</span>` : ''}
+        <span class="item-hora ${tarde?'item-tarde':''}">${it.hora||''}${tarde?' ⚠ tarde':''}</span>
+      </div>
+    </div>
+    ${del}
+  </div>`;
+}
+
+// ── Cocina ──
+function renderCocina() {
+  const items = S.pedidos.filter(p => p.depto === 'cocina' && p.seccion === S.seccion);
+  const tabs = COCINA_SECCIONES.map(s => {
+    const c = S.pedidos.filter(p => p.depto === 'cocina' && p.seccion === s).length;
+    return `<button class="tab ${S.seccion===s?'active':''}" data-sec="${s}">${s}<span class="count">${c}</span></button>`;
+  }).join('');
+  return `<div class="app">${renderHeader('Cocina')}
+    <div class="content">
+      <div class="tabs">${tabs}</div>
+      ${renderItemForm('form-cocina')}
+      <div class="item-list">${items.length ? items.map(i => renderItem(i,'cocina')).join('') : '<div class="empty">Sin productos en '+esc(S.seccion)+'</div>'}</div>
+    </div></div>`;
+}
+
+// ── Barra ──
+function renderBarra() {
+  const items = S.pedidos.filter(p => p.depto === 'barra');
+  return `<div class="app">${renderHeader('Barra')}
+    <div class="content">
+      ${renderItemForm('form-barra')}
+      <div class="item-list">${items.length ? items.map(i => renderItem(i,'barra')).join('') : '<div class="empty">Sin productos</div>'}</div>
+    </div></div>`;
+}
+
+// ── Comprador ──
+function renderComprador() {
+  const allItems = S.pedidos;
+  let items = [...allItems];
+  if (S.filtro==='cocina') items=items.filter(p=>p.depto==='cocina');
+  if (S.filtro==='barra') items=items.filter(p=>p.depto==='barra');
+  if (S.filtro==='pendiente') items=items.filter(p=>!p.comprado);
+  if (S.filtro==='comprado') items=items.filter(p=>p.comprado);
+  if (S.filtro==='tarde') items=items.filter(p=>esTarde(p.hora));
+
+  const total=allItems.length, done=allItems.filter(p=>p.comprado).length;
+  const pct=total?Math.round(done/total*100):0;
+  const tardeCount=allItems.filter(p=>esTarde(p.hora)).length;
+
+  const grupos={};
+  items.forEach(it=>{
+    const k=it.depto==='cocina'?'Cocina · '+it.seccion:'Barra';
+    if(!grupos[k])grupos[k]=[];grupos[k].push(it);
+  });
+
+  const filterBtns=[
+    {k:'todos',l:'Todos'},{k:'cocina',l:'Cocina'},{k:'barra',l:'Barra'},
+    {k:'pendiente',l:'Pendiente'},{k:'comprado',l:'Comprado'},{k:'tarde',l:`⚠ Tarde (${tardeCount})`}
+  ].map(f=>`<button class="filter-btn ${S.filtro===f.k?'active':''}" data-filtro="${f.k}">${f.l}</button>`).join('');
+
+  let gruposHtml='';
+  for(const[g,gi]of Object.entries(grupos)){
+    const pend=gi.filter(i=>!i.comprado).length;
+    gruposHtml+=`<div class="grupo-title">${esc(g)}<span class="grupo-pending">${pend} pendientes</span></div>`;
+    gruposHtml+=`<div class="item-list">${gi.map(i=>renderItem(i,'comprador')).join('')}</div>`;
+  }
+  if(!Object.keys(grupos).length)gruposHtml='<div class="empty">Sin productos</div>';
+
+  const fechas = S.fechas.includes(S.fecha) ? S.fechas : [S.fecha,...S.fechas];
+  const dateOpts=fechas.map(f=>`<option value="${f}" ${f===S.fechaSel?'selected':''}>${formatFecha(f)}</option>`).join('');
+
+  return `<div class="app">${renderHeader('Comprador')}
+    <div class="content">
+      <select class="date-select" id="fecha-sel">${dateOpts}</select>
+      <div class="progress-bar" style="margin-top:12px">
+        <div class="progress-top">
+          <span class="progress-label">${done} de ${total} comprados</span>
+          <span class="progress-pct" style="color:${pct===100?'var(--success)':'var(--text)'}">${pct}%</span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div class="progress-actions">
+          <button style="color:var(--success)" id="marcar-todos">Marcar todos ✓</button>
+          <button style="color:var(--danger)" id="desmarcar-todos">Desmarcar</button>
+        </div>
+      </div>
+      <div class="filters">${filterBtns}</div>
+      ${gruposHtml}
+    </div>
+    <button class="fab-export" id="btn-export" title="Exportar imagen">📋</button>
+    ${renderExportArea(allItems)}
+  </div>`;
+}
+
+function renderExportArea(items){
+  const grupos={};
+  items.forEach(it=>{const k=it.depto==='cocina'?'Cocina · '+it.seccion:'Barra';if(!grupos[k])grupos[k]=[];grupos[k].push(it)});
+  let sections='';
+  for(const[g,gi]of Object.entries(grupos)){
+    let rows=gi.map(it=>{
+      const tarde=esTarde(it.hora);
+      return `<div class="export-item ${it.comprado?'done':''}">
+        <div class="check-mark ${it.comprado?'done':''}">${it.comprado?'✓':''}</div>
+        <span>${esc(it.nombre)}</span>
+        ${tarde?`<span class="hora-tag tarde">${it.hora} ⚠</span>`:`<span class="hora-tag" style="background:#f0f0f0;color:#999">${it.hora||''}</span>`}
+        <span class="cant">${it.cantidad?esc(it.cantidad)+' '+esc(it.unidad||''):''}</span>
+      </div>`;
+    }).join('');
+    sections+=`<div class="export-section"><div class="export-section-title">${esc(g)}</div>${rows}</div>`;
+  }
+  const done=items.filter(p=>p.comprado).length;
+  return `
+  <div class="export-area" id="export-area">
+    <div class="export-header">
+      <img src="logo.png" class="export-logo">
+      <div class="export-header-text">
+        <h2>Lista de Compras</h2>
+        <p>${formatFecha(S.fechaSel)} · ${done}/${items.length} comprados</p>
+      </div>
+    </div>
+    <div class="export-body">${sections||'<div class="empty">Sin productos</div>'}</div>
+    <div class="export-footer">Pares 84×88 — Generado ${horaActual()}</div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════
+// BINDINGS
+// ══════════════════════════════════════════
+function bindSetup() {
+  document.getElementById('sb-save')?.addEventListener('click', () => {
+    const url = document.getElementById('sb-url').value.trim().replace(/\/$/,'');
+    const key = document.getElementById('sb-key').value.trim();
+    if (!url || !key) { toast('Completa ambos campos'); return; }
+    localStorage.setItem('p88_sb_url', url);
+    localStorage.setItem('p88_sb_key', key);
+    window.location.reload();
+  });
+}
+
+function bindSplash() {
+  document.querySelectorAll('.role-btn').forEach(b => b.addEventListener('click', () => {
+    S.rol = b.dataset.rol; loadData();
+  }));
+}
+
+function bindBack() {
+  document.getElementById('btn-back')?.addEventListener('click', () => { S.rol = null; render(); });
+}
+
+async function bindForm(formId, depto, seccion) {
+  const ni = document.getElementById(formId+'-n');
+  const ci = document.getElementById(formId+'-c');
+  const ui = document.getElementById(formId+'-u');
+  const btn = document.getElementById(formId+'-btn');
+  if (!ni) return;
+  const doAdd = async () => {
+    if (!ni.value.trim()) return;
+    btn.disabled = true; btn.textContent = '…';
+    try {
+      await sb.addPedido({
+        depto, seccion: seccion || 'General',
+        nombre: ni.value.trim(), cantidad: ci.value.trim(), unidad: ui.value.trim(),
+        hora: horaActual(), fecha: S.fechaSel, comprado: false
+      });
+      await loadData();
+      toast('Agregado ✓');
+    } catch(e) { toast('Error: ' + e.message); }
+  };
+  btn.addEventListener('click', doAdd);
+  [ni,ci,ui].forEach(inp => inp.addEventListener('keydown', e => { if(e.key==='Enter') doAdd() }));
+  ni.focus();
+}
+
+function bindDeletes() {
+  document.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', async () => {
+    try { await sb.deletePedido(b.dataset.del); await loadData(); toast('Eliminado'); } catch(e) { toast('Error'); }
+  }));
+}
+
+function bindCocina() {
+  bindBack();
+  document.querySelectorAll('[data-sec]').forEach(b => b.addEventListener('click', () => { S.seccion=b.dataset.sec; render(); }));
+  bindForm('form-cocina','cocina',S.seccion);
+  bindDeletes();
+}
+
+function bindBarra() {
+  bindBack();
+  bindForm('form-barra','barra','General');
+  bindDeletes();
+}
+
+function bindComprador() {
+  bindBack();
+  document.getElementById('fecha-sel')?.addEventListener('change', async function() {
+    S.fechaSel = this.value;
+    await loadData();
+  });
+  document.querySelectorAll('[data-toggle]').forEach(b => b.addEventListener('click', async () => {
+    const it = S.pedidos.find(p=>p.id===b.dataset.toggle);
+    if(it){ try{ await sb.toggleComprado(it.id,!it.comprado); await loadData(); }catch(e){toast('Error')} }
+  }));
+  document.querySelectorAll('[data-filtro]').forEach(b => b.addEventListener('click', () => { S.filtro=b.dataset.filtro; render(); }));
+  document.getElementById('marcar-todos')?.addEventListener('click', async () => {
+    try{ await sb.marcarTodos(S.fechaSel,true); await loadData(); toast('Todo marcado ✓'); }catch(e){toast('Error')}
+  });
+  document.getElementById('desmarcar-todos')?.addEventListener('click', async () => {
+    try{ await sb.marcarTodos(S.fechaSel,false); await loadData(); }catch(e){toast('Error')}
+  });
+  document.getElementById('btn-export')?.addEventListener('click', exportarImagen);
+}
+
+async function exportarImagen() {
+  const area = document.getElementById('export-area');
+  if(!area)return;
+  toast('Generando imagen...');
+  area.style.position='fixed';area.style.left='0';area.style.top='0';area.style.zIndex='9999';
+  try {
+    const canvas = await html2canvas(area,{scale:2,backgroundColor:'#fff',useCORS:true});
+    const link = document.createElement('a');
+    link.download = `pedidos_${S.fechaSel}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    toast('Imagen descargada ✓');
+  } catch(e) { toast('Error: '+e.message); }
+  area.style.position='absolute';area.style.left='-9999px';area.style.zIndex='';
+}
+
+// ── Data loading ──
+async function loadData() {
+  try {
+    S.pedidos = await sb.getPedidos(S.fechaSel);
+    if (S.rol === 'comprador') S.fechas = await sb.getFechas();
+    S.ready = true;
+    render();
+  } catch(e) {
+    toast('Error de conexión');
+    console.error(e);
+  }
+}
+
+// ── Auto-refresh ──
+setInterval(() => { if (S.ready && S.rol) loadData(); }, REFRESH_MS);
+
+// ── Init ──
+(function init() {
+  if (S.configured) {
+    if (LOCKED_ROL && ['cocina','barra','comprador'].includes(LOCKED_ROL)) {
+      S.rol = LOCKED_ROL;
+    }
+    if (S.rol) {
+      loadData();
+    } else {
+      S.ready = true;
+      render();
+    }
+  } else {
+    render();
+  }
+})();
+</script>
+</body>
+</html>
