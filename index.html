@@ -51,7 +51,7 @@ button{font-family:inherit;cursor:pointer}input{font-family:inherit}
 .add-form input{padding:10px 12px;border-radius:8px;border:1px solid var(--border);font-size:14px;outline:none;transition:border-color .2s;background:#1a1a1a;color:#e8e8e8}
 .add-form input::placeholder{color:#555}
 .add-form input:focus{border-color:#555}
-.inp-nombre{flex:2 1 140px}.inp-cant{flex:0 1 60px;text-align:center}.inp-uni{flex:0 1 60px;text-align:center}
+.inp-nombre{flex:2 1 140px}.inp-cant{flex:0 1 60px;text-align:center}.inp-uni{flex:0 1 80px;text-align:center;padding:10px 8px;border-radius:8px;border:1px solid var(--border);font-size:14px;outline:none;background:#1a1a1a;color:#e8e8e8;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:22px}
 .btn-add{padding:10px 16px;border-radius:8px;border:none;background:#fff;color:#000;font-size:16px;font-weight:600;flex-shrink:0}
 .btn-add:active{background:#ccc}
 
@@ -186,7 +186,7 @@ const sb = {
 
 // ── Helpers ──
 function uid(){return crypto.randomUUID?.()|| (Date.now().toString(36)+Math.random().toString(36).slice(2,8))}
-function fechaHoy(){return new Date().toISOString().slice(0,10)}
+function fechaHoy(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function horaActual(){const d=new Date();return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')}
 function esTarde(hora){if(!hora)return false;return parseInt(hora.split(':')[0])>=HORA_LIMITE}
 function formatFecha(s){const[y,m,d]=s.split('-');const mm=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];return parseInt(d)+' '+mm[parseInt(m)-1]+' '+y}
@@ -222,7 +222,6 @@ function render() {
 }
 
 function renderSplash() {
-  const base = window.location.origin + window.location.pathname;
   return `
   <div class="splash">
     <img src="logo.png" class="splash-logo" alt="Pares 84×88">
@@ -232,12 +231,6 @@ function renderSplash() {
       <button class="role-btn" data-rol="cocina">Cocina<span>Pedidos por sección</span></button>
       <button class="role-btn" data-rol="barra">Barra<span>Lista general</span></button>
       <button class="role-btn" data-rol="comprador">Comprador<span>Ver todo · marcar compras</span></button>
-    </div>
-    <div class="splash-links">
-      <div class="splash-date" style="margin-top:12px">Links directos para tu equipo</div>
-      <a href="${base}?v=cocina">🍳 ${base}?v=cocina</a>
-      <a href="${base}?v=barra">🍹 ${base}?v=barra</a>
-      <a href="${base}?v=comprador">🛒 ${base}?v=comprador</a>
     </div>
   </div>`;
 }
@@ -259,14 +252,21 @@ function renderItemForm(id) {
   return `
   <div class="add-form" id="${id}">
     <input class="inp-nombre" placeholder="Producto..." id="${id}-n" autocomplete="off">
-    <input class="inp-cant" placeholder="Cant." id="${id}-c" autocomplete="off">
-    <input class="inp-uni" placeholder="kg, pz…" id="${id}-u" autocomplete="off">
+    <input class="inp-cant" placeholder="Cant." id="${id}-c" autocomplete="off" type="number" inputmode="decimal" min="0" step="any">
+    <select class="inp-uni" id="${id}-u">
+      <option value="">—</option>
+      <option value="kg">kg</option>
+      <option value="pz">pz</option>
+      <option value="caja">caja</option>
+      <option value="bolsa">bolsa</option>
+    </select>
     <button class="btn-add" id="${id}-btn">+</button>
   </div>`;
 }
 
 function renderItem(it, modo) {
   const tarde = esTarde(it.hora);
+  const showTarde = modo === 'comprador' && tarde;
   const check = modo === 'comprador' ? `<button class="item-check ${it.comprado?'checked':''}" data-toggle="${it.id}">${it.comprado?'✓':''}</button>` : '';
   const del = modo !== 'comprador' && !it.comprado ? `<button class="item-del" data-del="${it.id}">✕</button>` : '';
   return `
@@ -276,7 +276,7 @@ function renderItem(it, modo) {
       <div class="item-name">${esc(it.nombre)}</div>
       <div class="item-meta">
         ${it.cantidad ? `<span class="item-cant">${esc(it.cantidad)} ${esc(it.unidad||'')}</span>` : ''}
-        <span class="item-hora ${tarde?'item-tarde':''}">${it.hora||''}${tarde?' ⚠ tarde':''}</span>
+        <span class="item-hora ${showTarde?'item-tarde':''}">${it.hora||''}${showTarde?' ⚠ tarde':''}</span>
       </div>
     </div>
     ${del}
