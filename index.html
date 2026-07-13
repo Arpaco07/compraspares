@@ -618,29 +618,26 @@ async function generarImagenConSeleccion(selectedIds) {
 
   let sections = '';
   for (const [g, gi] of Object.entries(grupos)) {
-    let rows = gi.map(it => {
-      const tarde = esTarde(it.hora);
-      return `<div class="export-item ${it.comprado?'done':''}">
-        <div class="check-mark ${it.comprado?'done':''}">${it.comprado?'✓':''}</div>
-        <span>${esc(it.nombre)}</span>
-        ${tarde?`<span class="hora-tag tarde">${it.hora} ⚠</span>`:`<span class="hora-tag" style="background:#f0f0f0;color:#999">${it.hora||''}</span>`}
-        <span class="cant">${it.cantidad?esc(it.cantidad)+' '+esc(it.unidad||''):''}</span>
+    let rows = gi.map((it, idx) => {
+      return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:14px;color:#222">
+        <span style="color:#999;font-size:12px;width:20px;text-align:right;flex-shrink:0">${idx+1}.</span>
+        <span style="flex:1;font-weight:500">${esc(it.nombre)}</span>
+        <span style="color:#555;font-size:13px;white-space:nowrap">${it.cantidad?esc(it.cantidad)+' '+esc(it.unidad||''):''}</span>
       </div>`;
     }).join('');
-    sections += `<div class="export-section"><div class="export-section-title">${esc(g)}</div>${rows}</div>`;
+    sections += `<div style="margin-bottom:18px"><div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#999;padding-bottom:6px;margin-bottom:4px;border-bottom:2px solid #eee">${esc(g)}</div>${rows}</div>`;
   }
 
-  const done = items.filter(p => p.comprado).length;
   const area = document.getElementById('export-area');
   area.innerHTML = `
     <div class="export-header">
       <img src="logo.png" class="export-logo">
       <div class="export-header-text">
         <h2>Lista de Compras</h2>
-        <p>${formatFecha(S.fechaSel)} · ${done}/${items.length} comprados</p>
+        <p>${formatFecha(S.fechaSel)} · ${items.length} productos</p>
       </div>
     </div>
-    <div class="export-body">${sections}</div>
+    <div style="padding:20px">${sections}</div>
     <div class="export-footer">Pares 84×88 — Generado ${horaActual()}</div>`;
 
   toast('Generando imagen...');
