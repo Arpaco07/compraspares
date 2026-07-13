@@ -403,6 +403,7 @@ function renderComprador() {
       <div class="filters">${filterBtns}</div>
       ${gruposHtml}
     </div>
+    <button class="fab-export" id="btn-whats" title="Lista para WhatsApp" style="bottom:80px">💬</button>
     <button class="fab-export" id="btn-export" title="Exportar imagen">📋</button>
     <div class="export-area" id="export-area"></div>
   </div>`;
@@ -546,6 +547,109 @@ function bindComprador() {
     try{ await sb.marcarTodos(S.fechaSel,false); await loadData(); }catch(e){toast('Error')}
   });
   document.getElementById('btn-export')?.addEventListener('click', showExportPreview);
+  document.getElementById('btn-whats')?.addEventListener('click', showWhatsAppList);
+}
+
+// ── WhatsApp Text List ──
+function showWhatsAppList() {
+  const items = S.pedidos.filter(i => !i.comprado);
+  if (!items.length) { toast('Sin productos pendientes'); return; }
+
+  const selected = new Set();
+  const overlay = document.createElement('div');
+  overlay.className = 'export-preview';
+
+  function update() {
+    const grupos = {};
+    items.forEach(it => {
+      const k = it.depto==='cocina' ? 'Cocina · '+it.seccion : 'Barra';
+      if (!grupos[k]) grupos[k] = [];
+      grupos[k].push(it);
+    });
+
+    let html = '';
+    for (const [g, gi] of Object.entries(grupos)) {
+      html += `<div class="grupo-title">${esc(g)} <button class="sel-grupo" data-grupo="${esc(g)}" style="background:none;border:none;color:var(--success);font-size:11px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:600">Seleccionar todo</button></div>`;
+      gi.forEach(it => {
+        const checked = selected.has(it.id);
+        html += `<div class="export-preview-item">
+          <button class="ep-check ${checked?'checked':''}" data-epid="${it.id}">${checked?'✓':''}</button>
+          <span class="ep-name">${esc(it.nombre)}</span>
+          <span class="ep-cant">${it.cantidad?esc(it.cantidad)+' '+esc(it.unidad||''):''}</span>
+        </div>`;
+      });
+    }
+
+    // Preview text
+    let preview = '';
+    if (selected.size > 0) {
+      const selItems = items.filter(i => selected.has(i.id));
+      preview = selItems.map(i => `• ${i.nombre}${i.cantidad?' — '+i.cantidad+' '+(i.unidad||''):''}`).join('\n');
+    }
+
+    overlay.innerHTML = `
+      <div class="export-preview-header">
+        <h3>Lista para WhatsApp</h3>
+        <span style="color:#777;font-size:12px">${selected.size} seleccionados</span>
+      </div>
+      <div class="export-preview-body">
+        ${html}
+        ${selected.size > 0 ? `
+          <div style="margin-top:20px;padding:14px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px">
+            <div style="font-size:11px;color:#666;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Vista previa</div>
+            <pre style="font-size:13px;color:#ddd;white-space:pre-wrap;font-family:inherit;line-height:1.6;margin:0">${esc(preview)}</pre>
+          </div>` : ''}
+      </div>
+      <div class="export-preview-actions">
+        <button style="background:#2a2a2a;color:#999" id="wl-cancel">Cancelar</button>
+        <button style="background:#25d366;color:#fff" id="wl-copy" ${selected.size===0?'disabled':''}>${selected.size > 0 ? 'Copiar lista' : 'Selecciona productos'}</button>
+      </div>`;
+
+    // Bind item checks
+    overlay.querySelectorAll('[data-epid]').forEach(b => b.addEventListener('click', () => {
+      const id = b.dataset.epid;
+      if (selected.has(id)) selected.delete(id); else selected.add(id);
+      update();
+    }));
+
+    // Bind "select all" per group
+    overlay.querySelectorAll('.sel-grupo').forEach(b => b.addEventListener('click', () => {
+      const grupoName = b.dataset.grupo;
+      const grupoItems = items.filter(it => {
+        const k = it.depto==='cocina' ? 'Cocina · '+it.seccion : 'Barra';
+        return k === grupoName;
+      });
+      const allSelected = grupoItems.every(i => selected.has(i.id));
+      grupoItems.forEach(i => { if (allSelected) selected.delete(i.id); else selected.add(i.id); });
+      update();
+    }));
+
+    document.getElementById('wl-cancel')?.addEventListener('click', () => overlay.remove());
+    document.getElementById('wl-copy')?.addEventListener('click', () => {
+      if (selected.size === 0) return;
+      const selItems = items.filter(i => selected.has(i.id));
+      const text = `*Pedido Pares 84×88*\n${formatFecha(S.fechaSel)}\n\n` +
+        selItems.map(i => `• ${i.nombre}${i.cantidad?' — '+i.cantidad+' '+(i.unidad||''):''}`).join('\n');
+      navigator.clipboard.writeText(text).then(() => {
+        toast('Copiado al portapapeles ✓');
+        overlay.remove();
+      }).catch(() => {
+        // Fallback for mobile
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;left:-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        toast('Copiado al portapapeles ✓');
+        overlay.remove();
+      });
+    });
+  }
+
+  update();
+  document.body.appendChild(overlay);
 }
 
 // ── Export Preview ──
