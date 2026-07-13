@@ -218,9 +218,17 @@ const sb = {
 
 // ── Helpers ──
 function uid(){return crypto.randomUUID?.()|| (Date.now().toString(36)+Math.random().toString(36).slice(2,8))}
-function fechaHoy(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function formatDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function fechaHoy(){return formatDate(new Date())}
+function fechaPedido(){
+  // Order day starts at 10 AM, ends at 9:59 AM next day
+  // Before 10 AM = still yesterday's order
+  // 10 AM or later = today's order
+  const d = new Date();
+  if(d.getHours() < HORA_LIMITE) d.setDate(d.getDate()-1);
+  return formatDate(d);
+}
 function horaActual(){const d=new Date();return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')}
-function esTarde(hora){if(!hora)return false;return parseInt(hora.split(':')[0])>=HORA_LIMITE}
 function formatFecha(s){const[y,m,d]=s.split('-');const mm=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];return parseInt(d)+' '+mm[parseInt(m)-1]+' '+y}
 function esc(s){if(!s)return'';return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
@@ -228,9 +236,9 @@ function getParam(k){return new URLSearchParams(window.location.search).get(k)}
 
 // ── State ──
 let S = {
-  rol: getParam('v') || null,  // cocina | barra | comprador | null
+  rol: getParam('v') || null,
   fecha: fechaHoy(),
-  fechaSel: fechaHoy(),
+  fechaSel: fechaPedido(),
   seccion: 'Sams',
   filtro: 'todos',
   pedidos: [],
@@ -258,7 +266,7 @@ function renderSplash() {
   <div class="splash">
     <img src="logo.png" class="splash-logo" alt="Pares 84×88">
     <div class="splash-title">Pedidos</div>
-    <div class="splash-date">${formatFecha(fechaHoy())}</div>
+    <div class="splash-date">Para ${formatFecha(fechaPedido())}</div>
     <div class="roles">
       <button class="role-btn" data-rol="cocina">Cocina<span>Pedidos por sección</span></button>
       <button class="role-btn" data-rol="barra">Barra<span>Lista general</span></button>
@@ -269,6 +277,8 @@ function renderSplash() {
 
 function renderHeader(titulo) {
   const showBack = !LOCKED_ROL;
+  const esMañana = S.fechaSel !== fechaHoy();
+  const fechaLabel = esMañana ? `Para ${formatFecha(S.fechaSel)}` : formatFecha(S.fecha);
   return `
   <div class="header">
     ${showBack ? '<button class="header-back" id="btn-back">← Salir</button>' : '<div></div>'}
@@ -276,7 +286,7 @@ function renderHeader(titulo) {
       <img src="logo.png" class="header-logo">
       <span class="header-title">${titulo}</span>
     </div>
-    <span class="header-date">${formatFecha(S.fecha)}</span>
+    <span class="header-date">${fechaLabel}</span>
   </div>`;
 }
 
@@ -297,8 +307,6 @@ function renderItemForm(id) {
 }
 
 function renderItem(it, modo) {
-  const tarde = esTarde(it.hora);
-  const showTarde = modo === 'comprador' && tarde;
   const isComprador = modo === 'comprador';
   const showComprado = isComprador && it.comprado;
   const check = isComprador ? `<button class="item-check ${it.comprado?'checked':''}" data-toggle="${it.id}">${it.comprado?'✓':''}</button>` : '';
@@ -311,7 +319,7 @@ function renderItem(it, modo) {
       <div class="item-name">${esc(it.nombre)}</div>
       <div class="item-meta">
         ${it.cantidad ? `<span class="item-cant">${esc(it.cantidad)} ${esc(it.unidad||'')}</span>` : ''}
-        <span class="item-hora ${showTarde?'item-tarde':''}">${it.hora||''}${showTarde?' ⚠ tarde':''}</span>
+        <span class="item-hora">${it.hora||''}</span>
       </div>
     </div>
     ${edit}${del}
@@ -351,11 +359,9 @@ function renderComprador() {
   if (S.filtro==='barra') items=items.filter(p=>p.depto==='barra');
   if (S.filtro==='pendiente') items=items.filter(p=>!p.comprado);
   if (S.filtro==='comprado') items=items.filter(p=>p.comprado);
-  if (S.filtro==='tarde') items=items.filter(p=>esTarde(p.hora));
 
   const total=allItems.length, done=allItems.filter(p=>p.comprado).length;
   const pct=total?Math.round(done/total*100):0;
-  const tardeCount=allItems.filter(p=>esTarde(p.hora)).length;
 
   const grupos={};
   items.forEach(it=>{
@@ -365,7 +371,7 @@ function renderComprador() {
 
   const filterBtns=[
     {k:'todos',l:'Todos'},{k:'cocina',l:'Cocina'},{k:'barra',l:'Barra'},
-    {k:'pendiente',l:'Pendiente'},{k:'comprado',l:'Comprado'},{k:'tarde',l:`⚠ Tarde (${tardeCount})`}
+    {k:'pendiente',l:'Pendiente'},{k:'comprado',l:'Comprado'}
   ].map(f=>`<button class="filter-btn ${S.filtro===f.k?'active':''}" data-filtro="${f.k}">${f.l}</button>`).join('');
 
   let gruposHtml='';
