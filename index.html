@@ -420,6 +420,7 @@ async function bindForm(formId, depto, seccion) {
   const doAdd = async () => {
     if (!ni.value.trim()) return;
     btn.disabled = true; btn.textContent = '…';
+    lastAction = Date.now();
     try {
       await sb.addPedido({
         depto, seccion: seccion || 'General',
@@ -437,6 +438,7 @@ async function bindForm(formId, depto, seccion) {
 
 function bindDeletes() {
   document.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', async () => {
+    lastAction = Date.now();
     try { await sb.deletePedido(b.dataset.del); await loadData(); toast('Eliminado'); } catch(e) { toast('Error'); }
   }));
 }
@@ -462,7 +464,7 @@ function bindComprador() {
   });
   document.querySelectorAll('[data-toggle]').forEach(b => b.addEventListener('click', async () => {
     const it = S.pedidos.find(p=>p.id===b.dataset.toggle);
-    if(it){ try{ await sb.toggleComprado(it.id,!it.comprado); await loadData(); }catch(e){toast('Error')} }
+    if(it){ lastAction = Date.now(); try{ await sb.toggleComprado(it.id,!it.comprado); await loadData(); }catch(e){toast('Error')} }
   }));
   document.querySelectorAll('[data-filtro]').forEach(b => b.addEventListener('click', () => { S.filtro=b.dataset.filtro; render(); }));
   document.getElementById('marcar-todos')?.addEventListener('click', async () => {
@@ -491,7 +493,9 @@ async function exportarImagen() {
 }
 
 // ── Data loading ──
-async function loadData() {
+let lastAction = 0; // timestamp of last add/delete/toggle
+
+async function loadData(force) {
   try {
     S.pedidos = await sb.getPedidos(S.fechaSel);
     if (S.rol === 'comprador') S.fechas = await sb.getFechas();
@@ -503,8 +507,18 @@ async function loadData() {
   }
 }
 
+function isUserTyping() {
+  const el = document.activeElement;
+  return el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA');
+}
+
 // ── Auto-refresh ──
-setInterval(() => { if (S.ready && S.rol) loadData(); }, REFRESH_MS);
+setInterval(() => {
+  if (!S.ready || !S.rol) return;
+  if (isUserTyping()) return;
+  if (Date.now() - lastAction < 5000) return;
+  loadData();
+}, REFRESH_MS);
 
 // ── PWA Install ──
 let deferredPrompt = null;
