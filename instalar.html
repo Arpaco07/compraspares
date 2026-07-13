@@ -44,24 +44,16 @@ h1{text-align:center;font-size:18px;font-weight:700;letter-spacing:.5px;margin-b
 <div class="page">
   <img src="logo.png" class="logo" alt="Pares 84×88">
   <h1>Pedidos Pares 84×88</h1>
-  <p class="sub">Instalación para empleados</p>
+  <p class="sub">Toca tu área para abrir la app</p>
 
   <div class="section">
-    <h2>Tu acceso directo</h2>
     <a class="link-card" id="link-cocina">
       <div class="role">🍳 Cocina</div>
-      <div class="desc">Agregar pedidos por sección (Sams, Verduras, Otros...)</div>
-      <div class="url" id="url-cocina"></div>
+      <div class="desc">Agregar pedidos por sección</div>
     </a>
     <a class="link-card" id="link-barra">
       <div class="role">🍹 Barra</div>
       <div class="desc">Agregar pedidos de barra</div>
-      <div class="url" id="url-barra"></div>
-    </a>
-    <a class="link-card" id="link-comprador">
-      <div class="role">🛒 Comprador</div>
-      <div class="desc">Ver todo, marcar compras, exportar lista</div>
-      <div class="url" id="url-comprador"></div>
     </a>
   </div>
 
@@ -72,7 +64,7 @@ h1{text-align:center;font-size:18px;font-weight:700;letter-spacing:.5px;margin-b
     <div class="steps">
       <div class="step">
         <h3>Abre tu link</h3>
-        <p>Toca el link de arriba que te corresponda (<strong>Cocina</strong> o <strong>Barra</strong>)</p>
+        <p>Toca <strong>Cocina</strong> o <strong>Barra</strong> según te corresponda</p>
       </div>
       <div class="step">
         <h3>Android (Chrome)</h3>
@@ -80,7 +72,7 @@ h1{text-align:center;font-size:18px;font-weight:700;letter-spacing:.5px;margin-b
       </div>
       <div class="step">
         <h3>iPhone (Safari)</h3>
-        <p>Toca el botón <strong>Compartir ↑</strong> abajo → <strong>"Agregar a pantalla de inicio"</strong></p>
+        <p>Toca el botón <strong>Compartir ↑</strong> de abajo → <strong>"Agregar a pantalla de inicio"</strong></p>
       </div>
       <div class="step">
         <h3>Listo</h3>
@@ -90,33 +82,13 @@ h1{text-align:center;font-size:18px;font-weight:700;letter-spacing:.5px;margin-b
   </div>
 
   <div class="divider"></div>
-
-  <div class="section">
-    <h2>Reglas</h2>
-    <div class="steps">
-      <div class="step">
-        <h3>Pedidos antes de las 10:00 AM</h3>
-        <p>Todo lo que se necesite para el día siguiente se agrega <strong>antes de las 10 de la mañana</strong>. Lo que se agregue después aparece marcado como <strong>⚠ tarde</strong>.</p>
-      </div>
-      <div class="step">
-        <h3>Si se te olvidó, lo compras tú</h3>
-        <p>Los productos agregados después de las 10 AM son responsabilidad de quien los pidió tarde.</p>
-      </div>
-    </div>
-  </div>
-
-  <div class="divider"></div>
-  <p class="note">Pares 84×88<br>Sistema de pedidos internos</p>
+  <p class="note">Pares 84×88</p>
 </div>
 
 <script>
 const base = window.location.href.replace('instalar.html','').replace(/\/$/,'');
-document.getElementById('url-cocina').textContent = base + '/?v=cocina';
-document.getElementById('url-barra').textContent = base + '/?v=barra';
-document.getElementById('url-comprador').textContent = base + '/?v=comprador';
 document.getElementById('link-cocina').href = base + '/?v=cocina';
 document.getElementById('link-barra').href = base + '/?v=barra';
-document.getElementById('link-comprador').href = base + '/?v=comprador';
 </script>
 </body>
 </html>
