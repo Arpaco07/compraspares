@@ -560,6 +560,8 @@ function showWhatsAppList() {
   overlay.className = 'export-preview';
 
   function update() {
+    const scrollEl = overlay.querySelector('.export-preview-body');
+    const scrollPos = scrollEl ? scrollEl.scrollTop : 0;
     const grupos = {};
     items.forEach(it => {
       const k = it.depto==='cocina' ? 'Cocina · '+it.seccion : 'Barra';
@@ -625,6 +627,10 @@ function showWhatsAppList() {
     }));
 
     document.getElementById('wl-cancel')?.addEventListener('click', () => overlay.remove());
+    // Restore scroll
+    const newScrollEl = overlay.querySelector('.export-preview-body');
+    if (newScrollEl) newScrollEl.scrollTop = scrollPos;
+
     document.getElementById('wl-copy')?.addEventListener('click', () => {
       if (selected.size === 0) return;
       const selItems = items.filter(i => selected.has(i.id));
