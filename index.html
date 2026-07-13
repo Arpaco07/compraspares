@@ -69,7 +69,36 @@ button{font-family:inherit;cursor:pointer}input{font-family:inherit}
 .item-tarde{color:var(--danger);font-weight:600}
 .item-del{background:none;border:none;color:#444;font-size:16px;padding:2px 6px;flex-shrink:0;transition:color .15s}
 .item-del:hover{color:var(--danger)}
+.item-edit{background:none;border:none;color:#444;font-size:14px;padding:2px 6px;flex-shrink:0;transition:color .15s}
+.item-edit:hover{color:#fff}
 .empty{text-align:center;color:#444;padding:40px 20px;font-size:13px;letter-spacing:.5px}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:#161616;border:1px solid #2a2a2a;border-radius:14px;padding:24px;width:100%;max-width:380px}
+.modal h3{font-size:15px;font-weight:600;color:#fff;margin-bottom:16px}
+.modal label{font-size:11px;color:#666;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px;margin-top:12px}
+.modal input,.modal select{width:100%;padding:10px 12px;border-radius:8px;border:1px solid #2a2a2a;background:#1a1a1a;color:#e8e8e8;font-size:14px;outline:none;font-family:inherit}
+.modal input:focus,.modal select:focus{border-color:#555}
+.modal-actions{display:flex;gap:8px;margin-top:20px}
+.modal-actions button{flex:1;padding:11px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer}
+.modal-actions .btn-save{background:#fff;color:#000}
+.modal-actions .btn-cancel{background:#2a2a2a;color:#999}
+
+.export-preview{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:200;display:flex;flex-direction:column;padding:16px}
+.export-preview-header{display:flex;justify-content:space-between;align-items:center;padding:8px 0 16px}
+.export-preview-header h3{color:#fff;font-size:15px;font-weight:600}
+.export-preview-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.export-preview-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:#161616;border:1px solid #2a2a2a;margin-bottom:4px}
+.export-preview-item .ep-check{width:22px;height:22px;border-radius:6px;border:1.5px solid #444;background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;color:#000;cursor:pointer}
+.export-preview-item .ep-check.checked{background:var(--success);border-color:var(--success)}
+.export-preview-item .ep-name{font-size:14px;color:#ddd;flex:1}
+.export-preview-item .ep-cant{font-size:12px;color:#777}
+.export-preview-actions{padding:12px 0;display:flex;gap:8px}
+.export-preview-actions button{flex:1;padding:12px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer}
+
+.date-nav{display:flex;align-items:center;gap:8px}
+.date-nav button{background:#1a1a1a;border:1px solid #2a2a2a;color:#999;width:32px;height:32px;border-radius:6px;font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.date-nav button:active{background:#2a2a2a}
 
 .progress-bar{background:#161616;border:1px solid #2a2a2a;border-radius:10px;padding:14px 16px;margin-bottom:16px}
 .progress-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
@@ -152,7 +181,7 @@ const sb = {
       'apikey': SUPABASE_KEY,
       'Authorization': `Bearer ${SUPABASE_KEY}`,
       'Content-Type': 'application/json',
-      'Prefer': method === 'POST' ? 'return=representation' : ''
+      'Prefer': (method === 'POST' || method === 'PATCH') ? 'return=representation' : ''
     };
     if (opts.filters) url += '?' + opts.filters;
     if (opts.order) url += (url.includes('?') ? '&' : '?') + 'order=' + opts.order;
@@ -171,6 +200,9 @@ const sb = {
   },
   async toggleComprado(id, val) {
     return this.query('pedidos', 'PATCH', { filters: `id=eq.${id}`, body: { comprado: val } });
+  },
+  async updatePedido(id, data) {
+    return this.query('pedidos', 'PATCH', { filters: `id=eq.${id}`, body: data });
   },
   async deletePedido(id) {
     return this.query('pedidos', 'DELETE', { filters: `id=eq.${id}` });
@@ -267,10 +299,13 @@ function renderItemForm(id) {
 function renderItem(it, modo) {
   const tarde = esTarde(it.hora);
   const showTarde = modo === 'comprador' && tarde;
-  const check = modo === 'comprador' ? `<button class="item-check ${it.comprado?'checked':''}" data-toggle="${it.id}">${it.comprado?'✓':''}</button>` : '';
-  const del = modo !== 'comprador' && !it.comprado ? `<button class="item-del" data-del="${it.id}">✕</button>` : '';
+  const isComprador = modo === 'comprador';
+  const showComprado = isComprador && it.comprado;
+  const check = isComprador ? `<button class="item-check ${it.comprado?'checked':''}" data-toggle="${it.id}">${it.comprado?'✓':''}</button>` : '';
+  const del = !isComprador && !it.comprado ? `<button class="item-del" data-del="${it.id}">✕</button>` : '';
+  const edit = `<button class="item-edit" data-edit="${it.id}" data-nombre="${esc(it.nombre)}" data-cantidad="${esc(it.cantidad||'')}" data-unidad="${esc(it.unidad||'')}">✎</button>`;
   return `
-  <div class="item ${it.comprado?'comprado':''}">
+  <div class="item ${showComprado?'comprado':''}">
     ${check}
     <div class="item-info">
       <div class="item-name">${esc(it.nombre)}</div>
@@ -279,7 +314,7 @@ function renderItem(it, modo) {
         <span class="item-hora ${showTarde?'item-tarde':''}">${it.hora||''}${showTarde?' ⚠ tarde':''}</span>
       </div>
     </div>
-    ${del}
+    ${edit}${del}
   </div>`;
 }
 
@@ -341,12 +376,13 @@ function renderComprador() {
   }
   if(!Object.keys(grupos).length)gruposHtml='<div class="empty">Sin productos</div>';
 
-  const fechas = S.fechas.includes(S.fecha) ? S.fechas : [S.fecha,...S.fechas];
-  const dateOpts=fechas.map(f=>`<option value="${f}" ${f===S.fechaSel?'selected':''}>${formatFecha(f)}</option>`).join('');
-
   return `<div class="app">${renderHeader('Comprador')}
     <div class="content">
-      <select class="date-select" id="fecha-sel">${dateOpts}</select>
+      <div class="date-nav">
+        <button id="fecha-prev">‹</button>
+        <input type="date" class="date-select" id="fecha-sel" value="${S.fechaSel}">
+        <button id="fecha-next">›</button>
+      </div>
       <div class="progress-bar" style="margin-top:12px">
         <div class="progress-top">
           <span class="progress-label">${done} de ${total} comprados</span>
@@ -362,40 +398,11 @@ function renderComprador() {
       ${gruposHtml}
     </div>
     <button class="fab-export" id="btn-export" title="Exportar imagen">📋</button>
-    ${renderExportArea(allItems)}
+    <div class="export-area" id="export-area"></div>
   </div>`;
 }
 
-function renderExportArea(items){
-  const grupos={};
-  items.forEach(it=>{const k=it.depto==='cocina'?'Cocina · '+it.seccion:'Barra';if(!grupos[k])grupos[k]=[];grupos[k].push(it)});
-  let sections='';
-  for(const[g,gi]of Object.entries(grupos)){
-    let rows=gi.map(it=>{
-      const tarde=esTarde(it.hora);
-      return `<div class="export-item ${it.comprado?'done':''}">
-        <div class="check-mark ${it.comprado?'done':''}">${it.comprado?'✓':''}</div>
-        <span>${esc(it.nombre)}</span>
-        ${tarde?`<span class="hora-tag tarde">${it.hora} ⚠</span>`:`<span class="hora-tag" style="background:#f0f0f0;color:#999">${it.hora||''}</span>`}
-        <span class="cant">${it.cantidad?esc(it.cantidad)+' '+esc(it.unidad||''):''}</span>
-      </div>`;
-    }).join('');
-    sections+=`<div class="export-section"><div class="export-section-title">${esc(g)}</div>${rows}</div>`;
-  }
-  const done=items.filter(p=>p.comprado).length;
-  return `
-  <div class="export-area" id="export-area">
-    <div class="export-header">
-      <img src="logo.png" class="export-logo">
-      <div class="export-header-text">
-        <h2>Lista de Compras</h2>
-        <p>${formatFecha(S.fechaSel)} · ${done}/${items.length} comprados</p>
-      </div>
-    </div>
-    <div class="export-body">${sections||'<div class="empty">Sin productos</div>'}</div>
-    <div class="export-footer">Pares 84×88 — Generado ${horaActual()}</div>
-  </div>`;
-}
+// Remove old fechas variable references
 
 // ══════════════════════════════════════════
 // BINDINGS
@@ -443,46 +450,203 @@ function bindDeletes() {
   }));
 }
 
+function bindEdits() {
+  document.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => {
+    showEditModal(b.dataset.edit, b.dataset.nombre, b.dataset.cantidad, b.dataset.unidad);
+  }));
+}
+
+function showEditModal(id, nombre, cantidad, unidad) {
+  const existing = document.querySelector('.modal-overlay');
+  if (existing) existing.remove();
+  const unidades = ['','kg','pz','caja','bolsa'];
+  const opts = unidades.map(u => `<option value="${u}" ${u===unidad?'selected':''}>${u||'—'}</option>`).join('');
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal">
+      <h3>Editar producto</h3>
+      <label>Producto</label>
+      <input id="edit-nombre" value="${esc(nombre)}">
+      <label>Cantidad</label>
+      <input id="edit-cant" type="number" inputmode="decimal" min="0" step="any" value="${esc(cantidad)}">
+      <label>Unidad</label>
+      <select id="edit-uni">${opts}</select>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="edit-cancel">Cancelar</button>
+        <button class="btn-save" id="edit-save">Guardar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.getElementById('edit-cancel').addEventListener('click', () => modal.remove());
+  document.getElementById('edit-save').addEventListener('click', async () => {
+    const n = document.getElementById('edit-nombre').value.trim();
+    const c = document.getElementById('edit-cant').value.trim();
+    const u = document.getElementById('edit-uni').value;
+    if (!n) { toast('Escribe el nombre'); return; }
+    lastAction = Date.now();
+    try {
+      await sb.updatePedido(id, { nombre: n, cantidad: c, unidad: u });
+      modal.remove();
+      await loadData();
+      toast('Actualizado ✓');
+    } catch(e) { toast('Error al guardar'); }
+  });
+}
+
 function bindCocina() {
   bindBack();
   document.querySelectorAll('[data-sec]').forEach(b => b.addEventListener('click', () => { S.seccion=b.dataset.sec; render(); }));
   bindForm('form-cocina','cocina',S.seccion);
   bindDeletes();
+  bindEdits();
 }
 
 function bindBarra() {
   bindBack();
   bindForm('form-barra','barra','General');
   bindDeletes();
+  bindEdits();
+}
+
+function cambiarFecha(dias) {
+  const d = new Date(S.fechaSel + 'T12:00:00');
+  d.setDate(d.getDate() + dias);
+  S.fechaSel = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  loadData();
 }
 
 function bindComprador() {
   bindBack();
+  bindEdits();
   document.getElementById('fecha-sel')?.addEventListener('change', async function() {
     S.fechaSel = this.value;
     await loadData();
   });
+  document.getElementById('fecha-prev')?.addEventListener('click', () => cambiarFecha(-1));
+  document.getElementById('fecha-next')?.addEventListener('click', () => cambiarFecha(1));
   document.querySelectorAll('[data-toggle]').forEach(b => b.addEventListener('click', async () => {
     const it = S.pedidos.find(p=>p.id===b.dataset.toggle);
     if(it){ lastAction = Date.now(); try{ await sb.toggleComprado(it.id,!it.comprado); await loadData(); }catch(e){toast('Error')} }
   }));
   document.querySelectorAll('[data-filtro]').forEach(b => b.addEventListener('click', () => { S.filtro=b.dataset.filtro; render(); }));
   document.getElementById('marcar-todos')?.addEventListener('click', async () => {
+    lastAction = Date.now();
     try{ await sb.marcarTodos(S.fechaSel,true); await loadData(); toast('Todo marcado ✓'); }catch(e){toast('Error')}
   });
   document.getElementById('desmarcar-todos')?.addEventListener('click', async () => {
+    lastAction = Date.now();
     try{ await sb.marcarTodos(S.fechaSel,false); await loadData(); }catch(e){toast('Error')}
   });
-  document.getElementById('btn-export')?.addEventListener('click', exportarImagen);
+  document.getElementById('btn-export')?.addEventListener('click', showExportPreview);
 }
 
-async function exportarImagen() {
+// ── Export Preview ──
+function showExportPreview() {
+  const items = S.pedidos;
+  if (!items.length) { toast('Sin productos'); return; }
+
+  // Default: include non-purchased items
+  const selected = new Set(items.map(i => i.id));
+
+  const overlay = document.createElement('div');
+  overlay.className = 'export-preview';
+
+  function renderPreview() {
+    const grupos = {};
+    items.forEach(it => {
+      const k = it.depto==='cocina' ? 'Cocina · '+it.seccion : 'Barra';
+      if (!grupos[k]) grupos[k] = [];
+      grupos[k].push(it);
+    });
+
+    let html = '';
+    for (const [g, gi] of Object.entries(grupos)) {
+      html += `<div class="grupo-title">${esc(g)}</div>`;
+      gi.forEach(it => {
+        const checked = selected.has(it.id);
+        html += `<div class="export-preview-item">
+          <button class="ep-check ${checked?'checked':''}" data-epid="${it.id}">${checked?'✓':''}</button>
+          <span class="ep-name">${esc(it.nombre)}</span>
+          <span class="ep-cant">${it.cantidad?esc(it.cantidad)+' '+esc(it.unidad||''):''}</span>
+        </div>`;
+      });
+    }
+    return html;
+  }
+
+  function update() {
+    overlay.innerHTML = `
+      <div class="export-preview-header">
+        <h3>Selecciona qué incluir</h3>
+        <span style="color:#777;font-size:12px">${selected.size} de ${items.length}</span>
+      </div>
+      <div class="export-preview-body">${renderPreview()}</div>
+      <div class="export-preview-actions">
+        <button style="background:#2a2a2a;color:#999" id="ep-cancel">Cancelar</button>
+        <button style="background:#fff;color:#000" id="ep-generate">Generar imagen</button>
+      </div>`;
+
+    overlay.querySelectorAll('[data-epid]').forEach(b => b.addEventListener('click', () => {
+      const id = b.dataset.epid;
+      if (selected.has(id)) selected.delete(id); else selected.add(id);
+      update();
+    }));
+    document.getElementById('ep-cancel')?.addEventListener('click', () => overlay.remove());
+    document.getElementById('ep-generate')?.addEventListener('click', () => {
+      overlay.remove();
+      generarImagenConSeleccion([...selected]);
+    });
+  }
+
+  update();
+  document.body.appendChild(overlay);
+}
+
+async function generarImagenConSeleccion(selectedIds) {
+  const items = S.pedidos.filter(i => selectedIds.includes(i.id));
+  if (!items.length) { toast('Nada seleccionado'); return; }
+
+  // Build export area dynamically
+  const grupos = {};
+  items.forEach(it => {
+    const k = it.depto==='cocina' ? 'Cocina · '+it.seccion : 'Barra';
+    if (!grupos[k]) grupos[k] = [];
+    grupos[k].push(it);
+  });
+
+  let sections = '';
+  for (const [g, gi] of Object.entries(grupos)) {
+    let rows = gi.map(it => {
+      const tarde = esTarde(it.hora);
+      return `<div class="export-item ${it.comprado?'done':''}">
+        <div class="check-mark ${it.comprado?'done':''}">${it.comprado?'✓':''}</div>
+        <span>${esc(it.nombre)}</span>
+        ${tarde?`<span class="hora-tag tarde">${it.hora} ⚠</span>`:`<span class="hora-tag" style="background:#f0f0f0;color:#999">${it.hora||''}</span>`}
+        <span class="cant">${it.cantidad?esc(it.cantidad)+' '+esc(it.unidad||''):''}</span>
+      </div>`;
+    }).join('');
+    sections += `<div class="export-section"><div class="export-section-title">${esc(g)}</div>${rows}</div>`;
+  }
+
+  const done = items.filter(p => p.comprado).length;
   const area = document.getElementById('export-area');
-  if(!area)return;
+  area.innerHTML = `
+    <div class="export-header">
+      <img src="logo.png" class="export-logo">
+      <div class="export-header-text">
+        <h2>Lista de Compras</h2>
+        <p>${formatFecha(S.fechaSel)} · ${done}/${items.length} comprados</p>
+      </div>
+    </div>
+    <div class="export-body">${sections}</div>
+    <div class="export-footer">Pares 84×88 — Generado ${horaActual()}</div>`;
+
   toast('Generando imagen...');
   area.style.position='fixed';area.style.left='0';area.style.top='0';area.style.zIndex='9999';
   try {
-    const canvas = await html2canvas(area,{scale:2,backgroundColor:'#fff',useCORS:true});
+    const canvas = await html2canvas(area, {scale:2, backgroundColor:'#fff', useCORS:true});
     const link = document.createElement('a');
     link.download = `pedidos_${S.fechaSel}.png`;
     link.href = canvas.toDataURL('image/png');
