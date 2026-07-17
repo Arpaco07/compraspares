@@ -328,6 +328,7 @@ function renderItem(it, modo) {
 
 // ── Cocina ──
 function renderCocina() {
+  const esHoy = S.fechaSel === fechaPedido();
   const items = S.pedidos.filter(p => p.depto === 'cocina' && p.seccion === S.seccion);
   const tabs = COCINA_SECCIONES.map(s => {
     const c = S.pedidos.filter(p => p.depto === 'cocina' && p.seccion === s).length;
@@ -335,19 +336,30 @@ function renderCocina() {
   }).join('');
   return `<div class="app">${renderHeader('Cocina')}
     <div class="content">
-      <div class="tabs">${tabs}</div>
-      ${renderItemForm('form-cocina')}
+      <div class="date-nav">
+        <button id="fecha-prev">‹</button>
+        <input type="date" class="date-select" id="fecha-sel" value="${S.fechaSel}">
+        <button id="fecha-next">›</button>
+      </div>
+      <div class="tabs" style="margin-top:12px">${tabs}</div>
+      ${esHoy ? renderItemForm('form-cocina') : ''}
       <div class="item-list">${items.length ? items.map(i => renderItem(i,'cocina')).join('') : '<div class="empty">Sin productos en '+esc(S.seccion)+'</div>'}</div>
     </div></div>`;
 }
 
 // ── Barra ──
 function renderBarra() {
+  const esHoy = S.fechaSel === fechaPedido();
   const items = S.pedidos.filter(p => p.depto === 'barra');
   return `<div class="app">${renderHeader('Barra')}
     <div class="content">
-      ${renderItemForm('form-barra')}
-      <div class="item-list">${items.length ? items.map(i => renderItem(i,'barra')).join('') : '<div class="empty">Sin productos</div>'}</div>
+      <div class="date-nav">
+        <button id="fecha-prev">‹</button>
+        <input type="date" class="date-select" id="fecha-sel" value="${S.fechaSel}">
+        <button id="fecha-next">›</button>
+      </div>
+      ${esHoy ? renderItemForm('form-barra') : ''}
+      <div class="item-list" style="margin-top:12px">${items.length ? items.map(i => renderItem(i,'barra')).join('') : '<div class="empty">Sin productos</div>'}</div>
     </div></div>`;
 }
 
@@ -502,17 +514,28 @@ function showEditModal(id, nombre, cantidad, unidad) {
   });
 }
 
+function bindDateNav() {
+  document.getElementById('fecha-sel')?.addEventListener('change', async function() {
+    S.fechaSel = this.value;
+    await loadData();
+  });
+  document.getElementById('fecha-prev')?.addEventListener('click', () => cambiarFecha(-1));
+  document.getElementById('fecha-next')?.addEventListener('click', () => cambiarFecha(1));
+}
+
 function bindCocina() {
   bindBack();
+  bindDateNav();
   document.querySelectorAll('[data-sec]').forEach(b => b.addEventListener('click', () => { S.seccion=b.dataset.sec; render(); }));
-  bindForm('form-cocina','cocina',S.seccion);
+  if (S.fechaSel === fechaPedido()) bindForm('form-cocina','cocina',S.seccion);
   bindDeletes();
   bindEdits();
 }
 
 function bindBarra() {
   bindBack();
-  bindForm('form-barra','barra','General');
+  bindDateNav();
+  if (S.fechaSel === fechaPedido()) bindForm('form-barra','barra','General');
   bindDeletes();
   bindEdits();
 }
