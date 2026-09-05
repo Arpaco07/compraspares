@@ -254,11 +254,14 @@ const LOCKED_ROL = getParam('v');
 // ══════════════════════════════════════════
 function render() {
   const app = document.getElementById('app');
+  const scrollY = window.scrollY;
   if (!S.ready) { return; }
   if (!S.rol) { app.innerHTML = renderSplash(); bindSplash(); return; }
-  if (S.rol === 'cocina') { app.innerHTML = renderCocina(); bindCocina(); return; }
-  if (S.rol === 'barra') { app.innerHTML = renderBarra(); bindBarra(); return; }
-  if (S.rol === 'comprador') { app.innerHTML = renderComprador(); bindComprador(); return; }
+  if (S.rol === 'cocina') { app.innerHTML = renderCocina(); bindCocina(); }
+  else if (S.rol === 'barra') { app.innerHTML = renderBarra(); bindBarra(); }
+  else if (S.rol === 'comprador') { app.innerHTML = renderComprador(); bindComprador(); }
+  // Restore scroll position after re-render
+  window.scrollTo(0, scrollY);
 }
 
 function renderSplash() {
