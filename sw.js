@@ -1,4 +1,4 @@
-const CACHE = 'pares88-v1';
+const CACHE = 'pares88-v2';
 const ASSETS = ['./', './index.html', './logo.png'];
 
 self.addEventListener('install', e => {
